@@ -7,6 +7,15 @@ class TeamColour(Enum):
     BLACK = 2
 
 
+class PieceType(Enum):
+    PAWN = 1
+    KNIGHT = 2
+    BISHOP = 3
+    ROOK = 4
+    QUEEN = 5
+    KING = 6
+
+
 class ChessBoard(object):
 
     def __init__(self, **kwargs):
@@ -26,9 +35,6 @@ class ChessBoard(object):
         self.__add_main_pieces(0, TeamColour.BLACK)
         self.__add_main_pieces(7, TeamColour.WHITE)
         self.__add_pawns()
-
-    def __getitem__(self, coord):
-        return self.__board[coord[0]][coord[1]]
 
     def get_tiles(self):
         return self.__board
@@ -57,8 +63,8 @@ class ChessBoard(object):
 class ChessPiece(ABC):
 
     def __init__(self, position, team_colour):
+        self.colour = team_colour
         self._position = position
-        self._team = team_colour
         pass
 
     @abstractmethod
@@ -66,7 +72,7 @@ class ChessPiece(ABC):
         pass
 
     @abstractmethod
-    def get_available_moves(self, board: ChessBoard):
+    def get_moves(self, board):
         """
         Uses position to get all available squares the piece can move to.
 
@@ -78,34 +84,40 @@ class ChessPiece(ABC):
     def get_position(self):
         return self._position
 
-    def _get_diagonal_moves(self, board_tiles):
+    def _get_diagonal_moves(self, board):
+        diagonal_vectors = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
+        board_tiles = board.get_tiles()
+        return self.__get_moves_from_vectors(board_tiles, diagonal_vectors)
 
-        def step_SE(cell):
-            curr_cell[0] += 1
-            curr_cell[0] += 1
+    def _get_orthogonal_moves(self, board):
+        orthogonal_vectors = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+        board_tiles = board.get_tiles()
+        return self.__get_moves_from_vectors(board_tiles, orthogonal_vectors)
 
+    def __get_moves_from_vectors(self, board_tiles, vectors):
         available_moves = []
-        curr_cell = self._position
-        # NE
+        for vector in vectors:
+            curr_cell = self.__step(self._position, vector)
+            while self.__is_cell_on_board(curr_cell):
+                x = curr_cell[0]
+                y = curr_cell[1]
+                if board_tiles[x][y] is not None:  # Piece in this position
+                    if board_tiles[x][y].colour is self.colour:
+                        # Can't move into your own piece
+                        break
+                    else:
+                        # Can capture enemy piece
+                        available_moves.append(curr_cell)
+                        break
+                available_moves.append(curr_cell)
+                curr_cell = self.__step(curr_cell, vector)
+        return available_moves
 
-        # SE
-        step_SE(curr_cell)
-        while self.__is_cell_on_board(curr_cell):
-
-            if board_tiles[curr_cell[0], curr_cell[1]] is not None:
-                pass
-
-            # if it contains a piece of same colour, stop
-            # if it contains a piece of opposing colour, add to list and stop
-        # SW
-        # NW
+    def __step(self, cell, vector):
+        return cell[0] + vector[0], cell[1] + vector[1]
 
     def __is_cell_on_board(self, cell):
         return 0 <= cell[0] <= 7 and 0 <= cell[1] <= 7
-
-    # @abstractmethod
-    # def get_available_moves(self):
-    #     pass
 
 
 class King(ChessPiece):
@@ -114,7 +126,7 @@ class King(ChessPiece):
         super().__init__(position, team_colour)
         self.is_in_check = False
 
-    def get_available_moves(self, board: ChessBoard):
+    def get_moves(self, board: ChessBoard):
         pass
 
     def get_letter_representation(self):
@@ -122,17 +134,18 @@ class King(ChessPiece):
 
 
 class Queen(ChessPiece):
-    def get_available_moves(self, board: ChessBoard):
+    def get_moves(self, board: ChessBoard):
         diagonal_moves = self._get_diagonal_moves(board)
-
-        pass
+        orthogonal_moves = self._get_orthogonal_moves(board)
+        return orthogonal_moves + diagonal_moves
 
     def get_letter_representation(self):
         return 'Q'
 
 
 class Rook(ChessPiece):
-    def get_available_moves(self, board: ChessBoard):
+    def get_moves(self, board: ChessBoard):
+        return self._get_orthogonal_moves(board)
         pass
 
     def get_letter_representation(self):
@@ -140,15 +153,16 @@ class Rook(ChessPiece):
 
 
 class Bishop(ChessPiece):
-    def get_available_moves(self, board: ChessBoard):
-        pass
+    def get_moves(self, board: ChessBoard):
+        return self._get_diagonal_moves(board)
 
     def get_letter_representation(self):
         return 'B'
 
 
 class Knight(ChessPiece):
-    def get_available_moves(self, board: ChessBoard):
+    def get_moves(self, board: ChessBoard):
+
         pass
 
     def get_letter_representation(self):
@@ -156,7 +170,7 @@ class Knight(ChessPiece):
 
 
 class Pawn(ChessPiece):
-    def get_available_moves(self, board: ChessBoard):
+    def get_moves(self, board: ChessBoard):
         pass
 
     def get_letter_representation(self):
