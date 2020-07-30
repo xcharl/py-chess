@@ -66,7 +66,6 @@ class ChessConsoleRunner(object):
         while True:
             self.process_p1_turn()
             self.process_p2_turn()
-            pass
 
     def process_p1_turn(self):
         pass
