@@ -12,12 +12,7 @@ class ChessBoard(object):
 
     def __init__(self, **kwargs):
 
-        self.move_list = [7, 7, 7]
-
-        # # Copy existing board
-        # if kwargs.get('board') is not None:
-        #     self.__tiles = copy.deepcopy(kwargs.get('board'))
-        #     return
+        self.move_list = []
 
         # (row,col) with (0,0) in the top left.
         self.__tiles = []
@@ -43,6 +38,27 @@ class ChessBoard(object):
 
     def get_tiles(self):
         return self.__tiles
+
+    def move_piece(self, old_pos, new_pos):
+        """
+        Move piece to the designated new_pos, provided it is a valid move.
+
+        :returns: 'True' if piece successfully moved, else 'False'.
+        """
+        piece = self.__tiles[old_pos[0]][old_pos[1]]
+        if piece is None:
+            return False
+
+        if new_pos in piece.get_moves(self, prev_move=self.get_last_move()):
+            self.__tiles[old_pos[0]][old_pos[1]] = None
+            self.__tiles[new_pos[0]][new_pos[1]] = piece
+            piece.pos = new_pos
+            self.__update_king_dict(piece)
+            return True
+        return False
+
+    def get_last_move(self):
+        return (-1, -1) if len(self.move_list) == 0 else self.move_list[-1]
 
     def __add_main_pieces(self, row, team):
         self.__add_piece('Rook', (row, 0), team)
@@ -82,12 +98,16 @@ class ChessBoard(object):
         king = self.__tiles[king_pos[0]][king_pos[1]]
         return self.is_in_check(colour) and len(king.get_moves()) == 0
 
+    def __update_king_dict(self, piece):
+        if type(piece) is King:
+            self.king_pos_dict[piece.colour] = piece.pos
+
 
 class ChessPiece(ABC):
 
     def __init__(self, position, team_colour):
         self.colour = team_colour
-        self._position = position
+        self.pos = position
 
     @abstractmethod
     def get_letter_representation(self):
@@ -98,29 +118,9 @@ class ChessPiece(ABC):
         """
         Uses position to get all available squares the piece can move to.
 
-        # Returns
-            List of (x,y) coordinate tuples.
+        :return: List of (x,y) coordinate tuples.
         """
         pass
-
-    def move(self, board, new_pos, **kwargs):
-        """
-        Move this piece to the designated new_pos, provided it is a valid move.
-
-        :return: 'True' if piece has successfully moved, else 'False'.
-        """
-        if kwargs['prev_move'] is None:
-            raise Exception()
-        if new_pos in self.get_moves(board, prev_move=kwargs['prev_move']):
-            tiles = board.get_tiles()
-            tiles[self._position[0]][self._position[1]] = None
-            tiles[new_pos[0]][new_pos[1]] = self
-            self._position = new_pos
-            return True
-        return False
-
-    def get_position(self):
-        return self._position
 
     def _get_diagonal_moves(self, board):
         diagonal_vectors = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
@@ -138,7 +138,7 @@ class ChessPiece(ABC):
     def __get_moves_from_vectors(self, board_tiles, vectors):
         available_moves = []
         for vector in vectors:
-            curr_cell = self._get_cell_from_vector(self._position, vector)
+            curr_cell = self._get_cell_from_vector(self.pos, vector)
             while self._is_cell_on_board(curr_cell):
                 x = curr_cell[0]
                 y = curr_cell[1]
@@ -172,8 +172,8 @@ class King(ChessPiece):
         tiles = board.get_tiles()
         for x in [-1, 0, 1]:
             for y in [-1, 0, 1]:
-                new_x = self._position[0] + x
-                new_y = self._position[1] + y
+                new_x = self.pos[0] + x
+                new_y = self.pos[1] + y
 
                 if (self._is_cell_on_board((new_x, new_y))
                         and (x, y) != (0, 0)
@@ -229,7 +229,7 @@ class Knight(ChessPiece):
 
         board_tiles = board.get_tiles()
         potential_moves = [
-            self._get_cell_from_vector(self._position, v)
+            self._get_cell_from_vector(self.pos, v)
             for v in knight_vectors]
         for move in potential_moves:
             if not self._is_cell_on_board(move):
@@ -258,7 +258,7 @@ class Pawn(ChessPiece):
 
         avail_moves = []
         board_tiles = board.get_tiles()
-        curr_x, curr_y = self._position[0], self._position[1]
+        curr_x, curr_y = self.pos[0], self.pos[1]
 
         avail_moves += self.__get_l_r_moves(board_tiles, curr_x, curr_y)
         avail_moves += self.__get_forward_moves(board_tiles, curr_x, curr_y)

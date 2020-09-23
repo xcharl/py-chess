@@ -18,6 +18,16 @@ class ChessBoardTests(unittest.TestCase):
         self.board = ChessBoard(layout='blank')
         self.board_tiles = self.board.get_tiles()
 
+    def test_move_piece_Normal(self):
+        start_pos = (0, 0)
+        new_pos = (7, 7)
+        piece = add_piece(self.board, 'Bishop', start_pos, Colour.WHITE)
+        success = self.board.move_piece(start_pos, new_pos)
+
+        self.assertTrue(success)
+        self.assertEqual(piece, self.board_tiles[new_pos[0]][new_pos[1]])
+        self.assertIsNone(self.board_tiles[start_pos[0]][start_pos[1]])
+
     def test_is_in_check_WhiteInCheck(self):
         expected = True
 
