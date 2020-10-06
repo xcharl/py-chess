@@ -84,28 +84,28 @@ class ChessPieceTests(unittest.TestCase):
 class KingTests(ChessPieceTests):
 
     def test_move_Normal(self):
-        new_pos = (3, 1)
-        piece = add_piece(self.board, 'King', (2, 0), Colour.WHITE)
-        success = piece.move(self.board, new_pos, prev_move=(-1, -1))
+        orig_pos, new_pos = (2, 0), (3, 1)
+        piece = add_piece(self.board, 'King', orig_pos, Colour.WHITE)
+        success = self.board.move_piece(orig_pos, new_pos)
 
         self.assertTrue(success)
         self.assertEqual(piece, self.board_tiles[new_pos[0]][new_pos[1]])
         self.assertIsNone(self.board_tiles[2][0])
 
     def test_move_InToCheck(self):
-        new_pos = (3, 1)
-        piece = add_piece(self.board, 'King', (2, 0), Colour.WHITE)
+        orig_pos, new_pos = (2, 0), (3, 1)
+        piece = add_piece(self.board, 'King', orig_pos, Colour.WHITE)
         _ = add_piece(self.board, 'Rook', (3, 7), Colour.BLACK)
-        success = piece.move(self.board, new_pos, prev_move=(-1, -1))
+        success = self.board.move_piece(orig_pos, new_pos)
 
         self.assertFalse(success)
         self.assertEqual(piece, self.board_tiles[2][0])
 
     def test_move_TakePiece(self):
-        new_pos = (3, 1)
-        piece = add_piece(self.board, 'King', (2, 0), Colour.WHITE)
+        orig_pos, new_pos = (2, 0), (3, 1)
+        piece = add_piece(self.board, 'King', orig_pos, Colour.WHITE)
         _ = add_piece(self.board, 'Rook', new_pos, Colour.BLACK)
-        success = piece.move(self.board, new_pos, prev_move=(-1, -1))
+        success = self.board.move_piece(orig_pos, new_pos)
 
         self.assertTrue(success)
         self.assertEqual(piece, self.board_tiles[new_pos[0]][new_pos[1]])
@@ -154,31 +154,32 @@ class KingTests(ChessPieceTests):
 class BishopTests(ChessPieceTests):
 
     def test_move_Normal(self):
-        start_pos = (0, 0)
+        orig_pos = (0, 0)
         new_pos = (7, 7)
-        piece = add_piece(self.board, 'Bishop', start_pos, Colour.WHITE)
-        success = piece.move(self.board, new_pos, prev_move=(-1, -1))
+        piece = add_piece(self.board, 'Bishop', orig_pos, Colour.WHITE)
+        success = self.board.move_piece(orig_pos, new_pos)
 
         self.assertTrue(success)
         self.assertEqual(piece, self.board_tiles[new_pos[0]][new_pos[1]])
-        self.assertIsNone(self.board_tiles[start_pos[0]][start_pos[1]])
+        self.assertIsNone(self.board_tiles[orig_pos[0]][orig_pos[1]])
 
     def test_move_Blocked(self):
-        start_pos = (0, 0)
+        orig_pos = (0, 0)
         new_pos = (7, 7)
-        piece = add_piece(self.board, 'Bishop', start_pos, Colour.WHITE)
+        piece = add_piece(self.board, 'Bishop', orig_pos, Colour.WHITE)
         _ = add_piece(self.board, 'Bishop', (4, 4), Colour.WHITE)
-        success = piece.move(self.board, new_pos, prev_move=(-1, -1))
+        success = self.board.move_piece(orig_pos, new_pos)
 
         self.assertFalse(success)
         self.assertIsNone(self.board_tiles[new_pos[0]][new_pos[1]])
-        self.assertEqual(self.board_tiles[start_pos[0]][start_pos[1]], piece)
+        self.assertEqual(self.board_tiles[orig_pos[0]][orig_pos[1]], piece)
 
     def test_move_InToCheck(self):
+        orig_pos = (2, 0)
         new_pos = (3, 1)
-        piece = add_piece(self.board, 'King', (2, 0), Colour.WHITE)
+        piece = add_piece(self.board, 'King', orig_pos, Colour.WHITE)
         _ = add_piece(self.board, 'Rook', (3, 7), Colour.BLACK)
-        success = piece.move(self.board, new_pos, prev_move=(-1, -1))
+        success = self.board.move_piece(orig_pos, new_pos)
 
         self.assertFalse(success)
         self.assertEqual(piece, self.board_tiles[2][0])
@@ -224,14 +225,14 @@ class BishopTests(ChessPieceTests):
 class RookTests(ChessPieceTests):
 
     def test_move_Normal(self):
-        start_pos = (3, 6)
+        orig_pos = (3, 6)
         new_pos = (3, 7)
-        piece = add_piece(self.board, 'Rook', start_pos, Colour.WHITE)
-        success = piece.move(self.board, new_pos, prev_move=(-1, -1))
+        piece = add_piece(self.board, 'Rook', orig_pos, Colour.WHITE)
+        success = self.board.move_piece(orig_pos, new_pos)
 
         self.assertTrue(success)
         self.assertEqual(piece, self.board_tiles[new_pos[0]][new_pos[1]])
-        self.assertIsNone(self.board_tiles[start_pos[0]][start_pos[1]])
+        self.assertIsNone(self.board_tiles[orig_pos[0]][orig_pos[1]])
 
     def test_get_moves_Unblocked(self):
         expected_moves = sorted(
@@ -269,14 +270,14 @@ class RookTests(ChessPieceTests):
 class QueenTests(ChessPieceTests):
 
     def test_move_Normal(self):
-        start_pos = (0, 0)
+        orig_pos = (0, 0)
         new_pos = (5, 5)
-        piece = add_piece(self.board, 'Queen', start_pos, Colour.WHITE)
-        success = piece.move(self.board, new_pos, prev_move=(-1, -1))
+        piece = add_piece(self.board, 'Queen', orig_pos, Colour.WHITE)
+        success = self.board.move_piece(orig_pos, new_pos)
 
         self.assertTrue(success)
         self.assertEqual(piece, self.board_tiles[new_pos[0]][new_pos[1]])
-        self.assertIsNone(self.board_tiles[start_pos[0]][start_pos[1]])
+        self.assertIsNone(self.board_tiles[orig_pos[0]][orig_pos[1]])
 
     def test_get_moves_Unblocked(self):
         expected_moves = sorted(
@@ -314,14 +315,14 @@ class QueenTests(ChessPieceTests):
 class KnightTests(ChessPieceTests):
 
     def test_move_Normal(self):
-        start_pos = (0, 0)
+        orig_pos = (0, 0)
         new_pos = (1, 2)
-        piece = add_piece(self.board, 'Knight', start_pos, Colour.WHITE)
-        success = piece.move(self.board, new_pos, prev_move=(-1, -1))
+        piece = add_piece(self.board, 'Knight', orig_pos, Colour.WHITE)
+        success = self.board.move_piece(orig_pos, new_pos)
 
         self.assertTrue(success)
         self.assertEqual(piece, self.board_tiles[new_pos[0]][new_pos[1]])
-        self.assertIsNone(self.board_tiles[start_pos[0]][start_pos[1]])
+        self.assertIsNone(self.board_tiles[orig_pos[0]][orig_pos[1]])
 
     def test_get_moves_Unblocked(self):
         expected_moves = sorted(
