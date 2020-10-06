@@ -1,8 +1,10 @@
-from chess_common import Point
+
 from enum import Enum
 from random import Random
 import os
 import re
+
+from chess_logic import ChessBoard, Colour
 
 
 def clear_console():
@@ -20,10 +22,10 @@ class ChessConsoleManager(object):
         self.__valid_menu_inputs = ["1", "2"]
 
     def run(self):
-        self.print_menu_text()
+        self.__print_menu_text()
         selected_input = input()
 
-        while not self.is_valid_input(selected_input):
+        while not self.__is_valid_input(selected_input):
             print("Input is invalid, please enter a number:")
             selected_input = input()
 
@@ -37,7 +39,7 @@ class ChessConsoleManager(object):
         runner = ChessConsoleRunner(game_type)
         runner.execute_game_loop()
 
-    def print_menu_text(self):
+    def __print_menu_text(self):
         clear_console()
         print("Welcome to chess.")
         print("Would you like to play with a friend or against the computer?")
@@ -45,7 +47,7 @@ class ChessConsoleManager(object):
         print("2 Against the computer")
         print("Please select a value:")
 
-    def is_valid_input(self, input_selected):
+    def __is_valid_input(self, input_selected):
         return input_selected in self.__valid_menu_inputs
 
 
@@ -53,35 +55,70 @@ class ChessConsoleRunner(object):
 
     def __init__(self, game_type):
         self.__game_type = game_type
-        self.__renderer = ChessConsoleRenderer()
+        self.__input = ChessConsoleInput()
+        self.__board = ChessBoard()
+        self.__renderer = ChessConsoleRenderer(self.__board)
 
-        if game_type is GameType.MULTI_PLAYER:
-            self.__comp_player_id = -1
-        elif game_type is GameType.SINGLE_PLAYER:
-            rng = Random()
-            self.__comp_player_id = rng.randint(1, 2)
+        # if game_type is GameType.MULTI_PLAYER:
+        #     self.__comp_player_id = -1
+        # elif game_type is GameType.SINGLE_PLAYER:
+        #     rng = Random()
+        #     self.__comp_player_id = rng.randint(1, 2)
 
     def execute_game_loop(self):
-        # game_over = False
+        winner = None
+        self.__renderer.render()
         while True:
             self.process_p1_turn()
+            self.__renderer.render()
+            if self.__board.is_checkmate(Colour.BLACK):
+                winner = Colour.WHITE
+                break
+
             self.process_p2_turn()
-            pass
+            self.__renderer.render()
+            if self.__board.is_checkmate(Colour.WHITE):
+                winner = Colour.BLACK
+                break
 
     def process_p1_turn(self):
-        pass
+        move = self.__input.get_parsed_input()
+        while not self.__board.move_piece(move[0], move[1]):
+            print('Invalid move')
+            move = self.__input.get_parsed_input()
 
     def process_p2_turn(self):
         pass
 
 
 class ChessConsoleRenderer(object):
-    pass
+
+    def __init__(self, board):
+        self.board = board
+
+    def render(self):
+        clear_console()
+        tiles = self.board.get_tiles()
+        for y in range(7, -1, -1):
+            line = str(y)
+            line += " |"
+            for x in range(0, 8):
+                line += tiles[y][x].get_letter_representation() + "|"\
+                    if tiles[y][x] is not None \
+                    else " |"
+
+            print(line)
 
 
 class ChessConsoleInput(object):
 
     def get_parsed_input(self):
+        """
+        Prompt user for input, validate format and return move coordinates.
+
+        :return: A tuple of tuples with move coordinates
+         ((old_x, old_y), (new_x, new_y))
+        """
         player_input = self.__get_valid_input()
         return self.__parse_input(player_input)
 
@@ -90,7 +127,7 @@ class ChessConsoleInput(object):
         y0 = int(player_input[1]) - 1
         x1 = int(self.__get_num_from_char(player_input[3]))
         y1 = int(player_input[4]) - 1
-        return Point(x0, y0), Point(x1, y1)
+        return (x0, y0), (x1, y1)
 
     def __get_num_from_char(self, letter):
         return ord(letter) - 97
@@ -107,3 +144,8 @@ class ChessConsoleInput(object):
 
     def __is_input_valid(self, raw_input):
         return re.match('[a-h][1-8] [a-h][1-8]', raw_input)
+
+
+if __name__ == '__main__':
+    manager = ChessConsoleManager()
+    manager.run()
