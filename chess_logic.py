@@ -8,6 +8,18 @@ class Colour(Enum):
     BLACK = 2
 
 
+class ChessRunner:
+    """
+    Manages the game, executing game loop and options, e.g. 'play again'
+    or 'single player/multi-player'.
+    """
+    def __init__(self, io):
+        self.__io = io
+
+    def run(self):
+        pass
+
+
 class ChessBoard(object):
 
     def __init__(self, **kwargs):
